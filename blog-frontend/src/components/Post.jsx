@@ -1,7 +1,7 @@
-const Post = ({ id, title, content, editPost, deletePost }) => {
+const Post = ({ index, id, title, content, editPost, deletePost }) => {
   return (
     <tr>
-      <td>{id}</td>
+      <td>{index}</td>
       <td>{title}</td>
       <td>{content}</td>
       <td>

@@ -156,16 +156,25 @@ const List = () => {
             </tr>
           </thead>
           <tbody>
-            {posts.map((post) => (
-              <Post
-                key={post.id}
-                id={post.id}
-                title={post.title}
-                content={post.content}
-                editPost={editPost}
-                deletePost={deletePost}
-              />
-            ))}
+            {posts.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="text-center py-4 fw-bold">
+                  There are no posts yet.
+                </td>
+              </tr>
+            ) : (
+              posts.map((post, index) => (
+                <Post
+                  key={post.id}
+                  index={index + 1}
+                  id={post.id}
+                  title={post.title}
+                  content={post.content}
+                  editPost={editPost}
+                  deletePost={deletePost}
+                />
+              ))
+            )}
           </tbody>
         </table>
       </div>

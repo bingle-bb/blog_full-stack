@@ -1,4 +1,6 @@
 const Create = ({
+  titleRef,
+  contentRef,
   saveTitleToState,
   saveContentToState,
   savePost,
@@ -21,9 +23,11 @@ const Create = ({
             className="form-control"
             id="title"
             placeholder="Enter post title"
+            ref={titleRef} // ← FIXED
             onChange={saveTitleToState}
           />
         </div>
+
         <div className="mb-3 fw-bold">
           <label htmlFor="content" className="form-label">
             Content
@@ -33,9 +37,11 @@ const Create = ({
             id="content"
             rows="4"
             placeholder="Enter post content"
+            ref={contentRef} // ← FIXED
             onChange={saveContentToState}
           ></textarea>
         </div>
+
         <div className="d-flex">
           <button type="submit" className="btn btn-success me-2">
             <i className="fas fa-save me-2"></i>Save Post
