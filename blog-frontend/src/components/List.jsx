@@ -1,10 +1,13 @@
-import axios from "axios";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
+import { ThemeContext } from "../context/ThemeContext";
 import Create from "./Create";
 import Post from "./Post";
 import Edit from "./Edit";
+import blogApi from "../api/blogApi"; // ← import global axios
 
 const List = () => {
+  const { theme } = useContext(ThemeContext);
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [posts, setPosts] = useState([]);
@@ -17,9 +20,9 @@ const List = () => {
   const getContent = useRef();
 
   // Fetch posts
-  const fetchPost = async () => {
+  const fetchPosts = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/blog");
+      const res = await blogApi.get("/blog"); // ← use global axios
       setPosts(res.data);
     } catch (err) {
       console.error("Error fetching posts:", err);
@@ -27,12 +30,11 @@ const List = () => {
   };
 
   useEffect(() => {
-    fetchPost();
+    fetchPosts();
   }, []);
 
   const toggleCreate = () => setIsCreate(!isCreate);
 
-  // Edit button click
   const editPost = (id) => {
     const post = posts.find((p) => p.id === id);
     setEditId(id);
@@ -41,11 +43,10 @@ const List = () => {
     setIsEdit(true);
   };
 
-  // Delete post
   const deletePost = async (id) => {
     if (window.confirm("Are you sure you want to delete this post?")) {
-      await axios.delete(`http://localhost:3000/blog/${id}`);
-      fetchPost();
+      await blogApi.delete(`/blog/${id}`);
+      fetchPosts();
     }
   };
 
@@ -54,57 +55,48 @@ const List = () => {
 
   const savePost = async (event) => {
     event.preventDefault();
-
     const titleVal = getTitle.current?.value;
     const contentVal = getContent.current?.value;
 
-    if (titleVal && contentVal) {
-      await axios.post("http://localhost:3000/blog", {
-        title: titleVal,
-        content: contentVal,
-      });
-      fetchPost();
-
-      // reset inputs
-      getTitle.current.value = "";
-      getContent.current.value = "";
-
-      setValidateErr({});
-      setIsCreate(false);
-    } else {
-      let err = {};
+    if (!titleVal || !contentVal) {
+      const err = {};
       if (!titleVal) err.title = "This field is required!";
       if (!contentVal) err.content = "This field is required!";
       setValidateErr(err);
+      return;
     }
+
+    await blogApi.post("/blog", { title: titleVal, content: contentVal });
+    fetchPosts();
+    getTitle.current.value = "";
+    getContent.current.value = "";
+    setValidateErr({});
+    setIsCreate(false);
   };
 
   const updatePost = async (event) => {
     event.preventDefault();
-
     const titleVal = getTitle.current?.value;
     const contentVal = getContent.current?.value;
 
-    if (titleVal && contentVal) {
-      await axios.put(`http://localhost:3000/blog/${editId}`, {
-        title: titleVal,
-        content: contentVal,
-      });
-      fetchPost();
-
-      // reset inputs
-      getTitle.current.value = "";
-      getContent.current.value = "";
-
-      setIsEdit(false);
-      setEditId(null);
-      setValidateErr({});
-    } else {
-      let err = {};
+    if (!titleVal || !contentVal) {
+      const err = {};
       if (!titleVal) err.title = "This field is required!";
       if (!contentVal) err.content = "This field is required!";
       setValidateErr(err);
+      return;
     }
+
+    await blogApi.put(`/blog/${editId}`, {
+      title: titleVal,
+      content: contentVal,
+    });
+    fetchPosts();
+    getTitle.current.value = "";
+    getContent.current.value = "";
+    setIsEdit(false);
+    setEditId(null);
+    setValidateErr({});
   };
 
   const cancelEdit = () => {
@@ -114,6 +106,7 @@ const List = () => {
     setEditId(null);
     setValidateErr({});
   };
+
   if (isCreate) {
     return (
       <Create
@@ -127,6 +120,7 @@ const List = () => {
       />
     );
   }
+
   if (isEdit) {
     return (
       <Edit
@@ -142,11 +136,16 @@ const List = () => {
       />
     );
   }
+
   return (
     <div className="container mt-5" style={{ maxWidth: "900px" }}>
       <h1 className="text-center mb-4 fw-bold">Blog Posts</h1>
       <div className="table-responsive">
-        <table className="table table-warning text-center">
+        <table
+          className={`table text-center ${
+            theme === "dark" ? "table-dark" : "table-warning"
+          }`}
+        >
           <thead>
             <tr style={{ height: "60px" }}>
               <th>#</th>
@@ -178,7 +177,6 @@ const List = () => {
           </tbody>
         </table>
       </div>
-
       <button
         className="btn btn-warning fw-bold"
         onClick={() => setIsCreate(true)}

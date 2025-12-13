@@ -1,0 +1,57 @@
+.toggle-wrapper {
+  width: 70px;
+  height: 35px;
+  position: relative;
+}
+
+.toggle-wrapper input {
+  display: none;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background-color: #cccccc5c;
+  border-radius: 50px;
+  height: 100%;
+  padding: 0 8px; /* reduce padding */
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-ball {
+  position: absolute;
+  top: 3.5px; /* vertically center */
+  left: 3px;
+  width: 28px;
+  height: 28px;
+  background-color: #ffca2c; /* circle color */
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+  z-index: 2;
+}
+
+input:checked + .toggle-label .toggle-ball {
+  transform: translateX(35px);
+}
+
+.sun-icon,
+.moon-icon {
+  font-size: 18px;
+  z-index: 1;
+  line-height: 1;
+}
+
+.sun-icon {
+  color: #f39c12;
+}
+
+.moon-icon {
+  color: #34495e;
+}
+
+input:checked + .toggle-label {
+  background-color: #555;
+}
