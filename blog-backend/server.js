@@ -13,6 +13,9 @@ connectDB();
 const blog = require("./routers/blog");
 app.use("/blog", blog);
 
+const user = require("./routers/user");
+app.use("/user", user);
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });

@@ -2,7 +2,7 @@ const Blog = require("../models/blogModel");
 
 const blogList = async (req, res) => {
   try {
-    const blogs = await Blog.find();
+    const blogs = await Blog.find({ user_id: req.user.id });
     return res.status(200).json(blogs);
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -15,6 +15,10 @@ const blogDetail = async (req, res) => {
     if (!blogData) {
       return res.status(404).json({ message: "blog not found!" });
     }
+    if (blogData.user_id.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Permission not allowed!" });
+    }
+
     return res.status(200).json(blogData);
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -32,6 +36,7 @@ const blogCreate = async (req, res) => {
     const newBlog = await Blog.create({
       title,
       content,
+      user_id: req.user.id,
     });
 
     return res.status(201).json(newBlog);
@@ -46,7 +51,9 @@ const blogUpdate = async (req, res) => {
     if (!blogData) {
       return res.status(404).json({ message: "blog not found!" });
     }
-
+    if (blogData.user_id.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Permission not allowed!" });
+    }
     const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
@@ -62,7 +69,9 @@ const blogDelete = async (req, res) => {
     if (!blogData) {
       return res.status(404).json({ message: "blog not found!" });
     }
-
+    if (blogData.user_id.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Permission not allowed!" });
+    }
     await blogData.deleteOne();
     return res.status(200).json(blogData);
   } catch (err) {

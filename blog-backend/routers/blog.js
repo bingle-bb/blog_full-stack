@@ -8,12 +8,10 @@ const {
   blogUpdate,
   blogDelete,
 } = require("../controllers/blogController");
+const validateToken = require("../middleware/validateJwtToken");
 
 // middleware
-router.use((req, res, next) => {
-  console.log("Time:", Date.now());
-  next();
-});
+router.use(validateToken);
 
 // Get all blogs
 router.get("/", blogList);
