@@ -1,3 +1,6 @@
+import { useContext } from "react";
+import { ThemeContext } from "../context/ThemeContext";
+
 const Edit = ({
   updatePost,
   title,
@@ -9,13 +12,19 @@ const Edit = ({
   contentRef,
   validateErr,
 }) => {
+  const { theme } = useContext(ThemeContext);
+
+  const formBg = theme === "dark" ? "#333333" : "#FFF3CD";
+  const inputBg = theme === "dark" ? "#555555" : "#ffffff";
+  const inputColor = theme === "dark" ? "#fff" : "#000";
+
   return (
     <div className="container mt-5" style={{ maxWidth: "900px" }}>
       <h2 className="text-center mb-4 fw-bold">Edit Post</h2>
       <form
         onSubmit={updatePost}
         className="p-4 rounded"
-        style={{ backgroundColor: "#fff3cd" }}
+        style={{ backgroundColor: formBg, color: inputColor }}
       >
         <div className="mb-3 fw-bold">
           <label htmlFor="edit-title" className="form-label">
@@ -24,11 +33,16 @@ const Edit = ({
           <input
             type="text"
             id="edit-title"
-            className="form-control"
+            className="form-control mb-2"
             placeholder="Enter new title"
-            defaultValue={title}
+            value={title}
             ref={titleRef}
             onChange={saveTitleToState}
+            style={{
+              backgroundColor: inputBg,
+              color: inputColor,
+              border: theme === "dark" ? "1px solid #888" : "1px solid #ccc",
+            }}
           />
           {validateErr.title && (
             <p className="text-danger">{validateErr.title}</p>
@@ -41,12 +55,17 @@ const Edit = ({
           </label>
           <textarea
             id="edit-content"
-            className="form-control"
+            className="form-control mb-2"
             placeholder="Enter updated content"
             rows="4"
-            defaultValue={content}
+            value={content}
             ref={contentRef}
             onChange={saveContentToState}
+            style={{
+              backgroundColor: inputBg,
+              color: inputColor,
+              border: theme === "dark" ? "1px solid #888" : "1px solid #ccc",
+            }}
           ></textarea>
           {validateErr.content && (
             <p className="text-danger">{validateErr.content}</p>

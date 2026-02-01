@@ -16,6 +16,12 @@ app.use("/blog", blog);
 const user = require("./routers/user");
 app.use("/user", user);
 
+const auth = require("./routers/auth");
+app.use("/api/auth", auth);
+
+// const { sendEmailTesting } = require("./controllers/authController");
+// app.post("/email_testing", sendEmailTesting);
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });

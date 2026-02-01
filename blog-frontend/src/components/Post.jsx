@@ -1,24 +1,22 @@
 const Post = ({ index, id, title, content, editPost, deletePost }) => {
   return (
-    <tr>
-      <td>{index}</td>
-      <td>{title}</td>
-      <td>{content}</td>
-      <td>
-        <button
-          className="btn btn-sm btn-warning me-2"
-          onClick={() => editPost(id)}
-        >
-          <i className="fas fa-edit"></i>
+    <div className="card p-3">
+      <h5>
+        {index}. {title}
+      </h5>
+      <p>{content}</p>
+      <div className="d-flex gap-2">
+        <button className="btn btn-sm btn-warning" onClick={() => editPost(id)}>
+          Edit
         </button>
         <button
           className="btn btn-sm btn-danger"
           onClick={() => deletePost(id)}
         >
-          <i className="fas fa-trash-alt"></i>
+          Delete
         </button>
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 };
 

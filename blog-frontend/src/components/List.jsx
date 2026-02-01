@@ -1,39 +1,67 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
-import Create from "./Create";
+import { useAuth } from "../context/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
+
 import Post from "./Post";
+import Create from "./Create";
 import Edit from "./Edit";
-import blogApi from "../api/blogApi"; // ← import global axios
+import blogApi from "../api/blogApi";
 
 const List = () => {
   const { theme } = useContext(ThemeContext);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
   const [posts, setPosts] = useState([]);
   const [isCreate, setIsCreate] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [editId, setEditId] = useState("");
+  const [editId, setEditId] = useState(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
   const [validateErr, setValidateErr] = useState({});
 
-  const getTitle = useRef();
-  const getContent = useRef();
-
-  // Fetch posts
-  const fetchPosts = async () => {
-    try {
-      const res = await blogApi.get("/blog"); // ← use global axios
-      setPosts(res.data);
-    } catch (err) {
-      console.error("Error fetching posts:", err);
-    }
-  };
+  const titleRef = useRef();
+  const contentRef = useRef();
 
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  const toggleCreate = () => setIsCreate(!isCreate);
+  const fetchPosts = async () => {
+    try {
+      const res = await blogApi.get("/blog");
+      setPosts(res.data);
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+    }
+  };
+
+  const savePost = async (e) => {
+    e.preventDefault();
+    const t = titleRef.current?.value;
+    const c = contentRef.current?.value;
+
+    if (!t || !c) {
+      setValidateErr({
+        title: !t ? "Required" : "",
+        content: !c ? "Required" : "",
+      });
+      return;
+    }
+
+    try {
+      await blogApi.post("/blog", { title: t, content: c }); // token included automatically
+      fetchPosts();
+      setIsCreate(false);
+      setValidateErr({});
+      titleRef.current.value = "";
+      contentRef.current.value = "";
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+      alert("Failed to save post. Make sure you are logged in.");
+    }
+  };
 
   const editPost = (id) => {
     const post = posts.find((p) => p.id === id);
@@ -43,146 +71,124 @@ const List = () => {
     setIsEdit(true);
   };
 
+  const updatePost = async (e) => {
+    e.preventDefault();
+    const t = titleRef.current?.value;
+    const c = contentRef.current?.value;
+
+    if (!t || !c) {
+      setValidateErr({
+        title: !t ? "Required" : "",
+        content: !c ? "Required" : "",
+      });
+      return;
+    }
+
+    try {
+      await blogApi.put(`/blog/${editId}`, { title: t, content: c });
+      fetchPosts();
+      setIsEdit(false);
+      setEditId(null);
+      setValidateErr({});
+      titleRef.current.value = "";
+      contentRef.current.value = "";
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+      alert("Failed to update post.");
+    }
+  };
+
   const deletePost = async (id) => {
-    if (window.confirm("Are you sure you want to delete this post?")) {
+    if (!window.confirm("Are you sure?")) return;
+    try {
       await blogApi.delete(`/blog/${id}`);
       fetchPosts();
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+      alert("Failed to delete post.");
     }
-  };
-
-  const saveTitleToState = (e) => setTitle(e.target.value);
-  const saveContentToState = (e) => setContent(e.target.value);
-
-  const savePost = async (event) => {
-    event.preventDefault();
-    const titleVal = getTitle.current?.value;
-    const contentVal = getContent.current?.value;
-
-    if (!titleVal || !contentVal) {
-      const err = {};
-      if (!titleVal) err.title = "This field is required!";
-      if (!contentVal) err.content = "This field is required!";
-      setValidateErr(err);
-      return;
-    }
-
-    await blogApi.post("/blog", { title: titleVal, content: contentVal });
-    fetchPosts();
-    getTitle.current.value = "";
-    getContent.current.value = "";
-    setValidateErr({});
-    setIsCreate(false);
-  };
-
-  const updatePost = async (event) => {
-    event.preventDefault();
-    const titleVal = getTitle.current?.value;
-    const contentVal = getContent.current?.value;
-
-    if (!titleVal || !contentVal) {
-      const err = {};
-      if (!titleVal) err.title = "This field is required!";
-      if (!contentVal) err.content = "This field is required!";
-      setValidateErr(err);
-      return;
-    }
-
-    await blogApi.put(`/blog/${editId}`, {
-      title: titleVal,
-      content: contentVal,
-    });
-    fetchPosts();
-    getTitle.current.value = "";
-    getContent.current.value = "";
-    setIsEdit(false);
-    setEditId(null);
-    setValidateErr({});
   };
 
   const cancelEdit = () => {
     setIsEdit(false);
-    setTitle("");
-    setContent("");
     setEditId(null);
     setValidateErr({});
   };
 
-  if (isCreate) {
+  if (isCreate)
     return (
       <Create
-        titleRef={getTitle}
-        contentRef={getContent}
-        saveTitleToState={saveTitleToState}
-        saveContentToState={saveContentToState}
+        titleRef={titleRef}
+        contentRef={contentRef}
+        saveTitleToState={(e) => setTitle(e.target.value)}
+        saveContentToState={(e) => setContent(e.target.value)}
         savePost={savePost}
-        cancelCreate={toggleCreate}
+        cancelCreate={() => setIsCreate(false)}
         validateErr={validateErr}
       />
     );
-  }
 
-  if (isEdit) {
+  if (isEdit)
     return (
       <Edit
         title={title}
         content={content}
-        titleRef={getTitle}
-        contentRef={getContent}
-        saveTitleToState={saveTitleToState}
-        saveContentToState={saveContentToState}
+        titleRef={titleRef}
+        contentRef={contentRef}
+        saveTitleToState={(e) => setTitle(e.target.value)}
+        saveContentToState={(e) => setContent(e.target.value)}
         updatePost={updatePost}
         cancelEdit={cancelEdit}
         validateErr={validateErr}
       />
     );
-  }
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "900px" }}>
-      <h1 className="text-center mb-4 fw-bold">Blog Posts</h1>
-      <div className="table-responsive">
-        <table
-          className={`table text-center ${
-            theme === "dark" ? "table-dark" : "table-warning"
-          }`}
-        >
-          <thead>
-            <tr style={{ height: "60px" }}>
-              <th>#</th>
-              <th>Title</th>
-              <th>Content</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {posts.length === 0 ? (
-              <tr>
-                <td colSpan="4" className="text-center py-4 fw-bold">
-                  There are no posts yet.
-                </td>
-              </tr>
-            ) : (
-              posts.map((post, index) => (
-                <Post
-                  key={post.id}
-                  index={index + 1}
-                  id={post.id}
-                  title={post.title}
-                  content={post.content}
-                  editPost={editPost}
-                  deletePost={deletePost}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
+    <div className="container mt-5">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="fw-bold">Blog Posts</h1>
+
+        {user ? (
+          <div>
+            <button
+              className="btn btn-warning fw-bold me-2"
+              onClick={() => setIsCreate(true)}
+            >
+              <i className="fas fa-plus me-1"></i> Create New Post
+            </button>
+            <button
+              className="btn btn-danger fw-bold"
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <Link to="/login" className="btn btn-outline-warning fw-bold">
+            Login to create a post
+          </Link>
+        )}
       </div>
-      <button
-        className="btn btn-warning fw-bold"
-        onClick={() => setIsCreate(true)}
-      >
-        <i className="fas fa-plus me-1"></i> Create New Post
-      </button>
+
+      <div className="row g-3">
+        {posts.length === 0 ? (
+          <p className="text-center fw-bold">No posts yet.</p>
+        ) : (
+          posts.map((post, idx) => (
+            <Post
+              key={post.id}
+              user={user}
+              index={idx + 1}
+              {...post}
+              editPost={() => editPost(post.id)}
+              deletePost={() => deletePost(post.id)}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 };
